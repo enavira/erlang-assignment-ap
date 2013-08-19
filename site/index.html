@@ -1,0 +1,153 @@
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+		<style type="text/css">
+			html {
+				height: 100%
+			}
+			body {
+				height: 100%;
+				margin: 0;
+				padding: 0
+			}
+			#map_canvas {
+				height: 100%
+			}
+		</style>
+		<script type="text/javascript"
+		src="http://maps.googleapis.com/maps/api/js?sensor=true"></script>
+		<script type="text/javascript">
+			var map;
+			var flag = true;
+			var markersArray = [];
+			//This method distinguish the browser and create Http object for using ajax
+			function getxmlhttp() {
+				var xmlHttp = false;
+				if (window.XMLHttpRequest) {
+					// If IE7, Mozilla, Safari, etc: Use native object
+					var xmlHttp = new XMLHttpRequest();
+				} else {
+					if (window.ActiveXObject) {
+						// ...otherwise, use the ActiveX control for IE5.x and IE6
+						var xmlHttp = new ActiveXObject("Microsoft.XMLHTTP");
+					}
+				}
+
+				return xmlHttp;
+			}
+
+			//function to process an XMLHttpRequest
+			function process_ajax(phpPage, getOrPost) {
+				if (flag) {
+					map = init();
+					flag = false;
+				};
+				if(markersArray)
+					for(i in markersArray)
+						markersArray[i].setMap(null);
+				//alert("oy");
+				xmlhttp = getxmlhttp();
+				if(getOrPost == "get") {
+					xmlhttp.open("GET",phpPage);
+					//this ajax method called if onready state of this page changed
+					xmlhttp.onreadystatechange = function() {
+						//ReadyState --> 4: request finished and response is ready
+						//Status --> 	200: OK !
+						if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+							//map = init();
+							//get response from server
+							var result = xmlhttp.responseText;
+							//split the result string and get specific data to shown
+							var str_arr = result.split("a");
+							//alert(str_arr[1] + " - - - - - - " + str_arr[4]);
+							var cityCircle;
+							var mapOptions = {
+								strokeColor: "#FF0000",
+								strokeOpacity: 0.8,
+								strokeWeight: 0.1,
+								fillColor: "",
+								fillOpacity: 0.35,
+								map: map,
+								center: new google.maps.LatLng(40.714352, -74.005973),
+								radius: 5000
+							};
+							for (var i=0; i < str_arr.length; i++) {
+								if (i % 3 == 0) {
+									var lat = parseFloat(str_arr[i+1]);
+									var lng = parseFloat(str_arr[i+2]);
+									mapOptions.center = new google.maps.LatLng(lat, lng);
+									var index = parseInt(str_arr[i]);
+									switch (index) {
+										case 1:
+											mapOptions.fillOpacity = 0.0;
+											mapOptions.strokeOpacity = 0.0;
+											break;
+										case 2:
+											mapOptions.fillOpacity = 0.35;
+											mapOptions.strokeOpacity = 0.8;
+											mapOptions.fillColor = "#0B960B";
+											break;
+										case 3:
+											mapOptions.fillOpacity = 0.35;
+											mapOptions.strokeOpacity = 0.8;
+											mapOptions.fillColor = "#E6ED5C";
+											break;
+										case 4:
+											mapOptions.fillOpacity = 0.35;
+											mapOptions.strokeOpacity = 0.8;
+											mapOptions.fillColor = "#F2A641";
+											break;
+										case 5:
+											mapOptions.fillOpacity = 0.35;
+											mapOptions.strokeOpacity = 0.8;
+											mapOptions.fillColor = "#F57A73";
+										default:
+											break;
+									}
+									cityCircle = new google.maps.Circle(mapOptions);
+									markersArray[i/3] = cityCircle;
+								}
+							};
+						}
+					}
+				}
+				xmlhttp.send(null);
+			}
+
+			function show_alert() {
+				alert(positions[2]);
+			}
+
+			function click_button() {
+				document.getElementById('refresh_buttton').click();
+			}
+
+			function init() {
+				var latlng = new google.maps.LatLng(57.71, 11.96);
+				var myOptions = {
+					zoom: 9,
+					center: latlng,
+					mapTypeId: google.maps.MapTypeId.ROADMAP
+				};
+				var map = new google.maps.Map(document.getElementById("map_canvas"),
+				myOptions);
+
+				return map;
+			}
+
+			setInterval('click_button()',8000);
+		</script>
+	</head>
+	<body onload="process_ajax('georeader.php','get')" onunload="GUnload()" onload="" bgcolor="#000000">
+
+		<div id="map_canvas" style="width:100%; height:100%">
+		</div>
+
+		<form id="myform">
+			<input type="button" id="refresh_buttton" onclick="process_ajax('georeader.php','get')" style="visibility: hidden;">
+		</form>
+	</body>
+</html>
